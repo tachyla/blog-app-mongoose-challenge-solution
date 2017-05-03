@@ -55,3 +55,7 @@ function generateBlogPostData() {
   };
 }
 
+function tearDownDb() {
+    console.warn('Deleting database');
+    return mongoose.connection.dropDatabase();
+}
