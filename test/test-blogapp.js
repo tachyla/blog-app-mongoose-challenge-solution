@@ -12,13 +12,13 @@ const should = should();
 //REQUIRE model schema called {BlogPost} from models.js
 const {BlogPost} = require('../models');
 const {app, runServer, closeServer} = require('../server');
-const {DATABASE_URL} = require('../config');
+const {TEST_DATABASE_URL} = require('../config');
 
 //initialize Chai
 chai.should();
 chai.use(chaiHttp);
 
-runServer(DATABASE_URL);
+runServer(TEST_DATABASE_URL);
 
 
 
@@ -34,28 +34,45 @@ function seedBlogPostData() {
     //returns the promise of the seedData inserted into BlogPost
   return BlogPost.insertMany(seedData);
 }
-//NEED functions to :
+//This func describes how the seed data function will generate a whole BlogPost
+//NEED faker methods to :
                 //generate seed title 
                 //genereate seed content
                 //generate seed author
-                                        //that will be added to the TEST_DATABSE
-
-
-//This func describes how the seed data function will generate a whole BlogPost
-//that will be an object
+//NEEDS to be an object
 function generateBlogPostData() {
-    //return an object using all the generate functions from above
   return {
     title: faker.lorem.word,
     content: faker.lorem.sentence,
     author: {
-        firstName: faker.name.firstName, 
-        lastName: faker.name.lastName
+      firstName: faker.name.firstName, 
+      lastName: faker.name.lastName
     }
   };
 }
 
 function tearDownDb() {
-    console.warn('Deleting database');
-    return mongoose.connection.dropDatabase();
+  console.warn('Deleting database');
+  return mongoose.connection.dropDatabase();
 }
+
+describe("BlogPost API resource", function() {
+
+    before(function() {
+        return runServer(TEST_DATABASE_URL);
+    })
+
+    beforeEach(function() {
+        return seedBlogPostData();
+    })
+
+    afterEach(function() {
+        return teardownDb();
+    })
+
+    after(function() {
+        return closeServer();
+    })
+
+})
+
