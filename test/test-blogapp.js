@@ -1,21 +1,24 @@
+//'use: strict'
 //require all packages
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const faker = require('faker');
 const mongoose = require('mongoose');
+// mongoose.Promise = global.Promise;
 
 //this so should syntax can be used throughout 
 const should = should();
 
 //REQUIRE model schema called {BlogPost} from models.js
 const {BlogPost} = require('../models');
-const {app, runServer} = require('../server');
-const {TEST_DATABASE_URL} = require('../config');
+const {app, runServer, closeServer} = require('../server');
+const {DATABASE_URL} = require('../config');
 
-//initialize Chai with chaiHttp
+//initialize Chai
+chai.should();
 chai.use(chaiHttp);
 
-
+runServer(DATABASE_URL);
 
 
 
@@ -37,27 +40,18 @@ function seedBlogPostData() {
                 //generate seed author
                                         //that will be added to the TEST_DATABSE
 
-function generateTitle() {
-    //set title = to faker.title to generate some fake title
-    //title should be returned in the form of an object
-  return {title: faker.title};
-}
-
-function generateContent() {
-  return {content: faker.content};
-}
-
-function generateAuthor() {
-  return {author: faker.author};
-}
 
 //This func describes how the seed data function will generate a whole BlogPost
 //that will be an object
 function generateBlogPostData() {
     //return an object using all the generate functions from above
   return {
-    title: generateTitle(),
-    content: generateContent(),
-    author: generateAuthor()
+    title: faker.lorem.word,
+    content: faker.lorem.sentence,
+    author: {
+        firstName: faker.name.firstName, 
+        lastName: faker.name.lastName
+    }
   };
 }
+
