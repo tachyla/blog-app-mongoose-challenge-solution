@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 
-const {DATABASE_URL, PORT} = require('./config');
+const {TEST_DATABASE_URL, DATABASE_URL, PORT} = require('./config');
 const {BlogPost} = require('./models');
 
 const app = express();
@@ -53,8 +53,8 @@ app.post('/posts', (req, res) => {
     })
     .then(blogPost => res.status(201).json(blogPost.apiRepr()))
     .catch(err => {
-        console.error(err);
-        res.status(500).json({error: 'Something went wrong'});
+      console.error(err);
+      res.status(500).json({error: 'Something went wrong'});
     });
 
 });
@@ -106,20 +106,54 @@ app.use('*', function(req, res) {
   res.status(404).json({message: 'Not Found'});
 });
 
-function runServer(callback) {
-  mongoose.connect(DATABASE_URL, (err) => {
-    if (err && callback) {
-      return callback(err);
-    }
+let server;
 
-    app.listen(PORT, () => {
-      console.log(`Your app is listening on port ${PORT}`);
-      if (callback) {
-        callback();
+function runServer(databaseUrl=TEST_DATABASE_URL, port=PORT) {
+  return new Promise((resolve, reject) => {
+    mongoose.connect(databaseUrl, err => {
+      if (err) {
+        return reject(err);
       }
+      server = app.listen(port, () => {
+        console.log(`Your app is listening on port ${port}`);
+        resolve();
+      })
+      .on('error', err => {
+        mongoose.disconnect();
+        reject(err);
+      });
     });
   });
-};
+}
+
+function closeServer() {
+  return mongoose.disconnect().then(() => {
+    return new Promise((resolve, reject) => {
+      console.log('Closing server');
+      server.close(err => {
+        if (err) {
+          return reject(err);
+        }
+        resolve();
+      });
+    });
+  });
+}
+
+// function runServer(callback) {
+//   mongoose.connect(DATABASE_URL, (err) => {
+//     if (err && callback) {
+//       return callback(err);
+//     }
+
+//     app.listen(PORT, () => {
+//       console.log(`Your app is listening on port ${PORT}`);
+//       if (callback) {
+//         callback();
+//       }
+//     });
+//   });
+// };
 
 if (require.main === module) {
   runServer(function(err) {
@@ -127,6 +161,6 @@ if (require.main === module) {
       console.error(err);
     }
   });
-};
+}
 
-module.exports = {runServer, app};
+module.exports = {runServer, app, closeServer};

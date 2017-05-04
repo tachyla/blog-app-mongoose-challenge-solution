@@ -4,10 +4,10 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const faker = require('faker');
 const mongoose = require('mongoose');
-// mongoose.Promise = global.Promise;
+mongoose.Promise = global.Promise;
 
-//this so should syntax can be used throughout 
-const should = should();
+//this so should syntax can be used throughout
+const should = chai.should();
 
 //REQUIRE model schema called {BlogPost} from models.js
 const {BlogPost} = require('../models');
@@ -15,10 +15,9 @@ const {app, runServer, closeServer} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
 
 //initialize Chai
-chai.should();
 chai.use(chaiHttp);
-
-runServer(TEST_DATABASE_URL);
+// console.log(TEST_DATABASE_URL);
+// runServer(TEST_DATABASE_URL);
 
 
 
@@ -36,7 +35,7 @@ function seedBlogPostData() {
 }
 //This func describes how the seed data function will generate a whole BlogPost
 //NEED faker methods to :
-                //generate seed title 
+                //generate seed title
                 //genereate seed content
                 //generate seed author
 //NEEDS to be an object
@@ -45,7 +44,7 @@ function generateBlogPostData() {
     title: faker.lorem.word,
     content: faker.lorem.sentence,
     author: {
-      firstName: faker.name.firstName, 
+      firstName: faker.name.firstName,
       lastName: faker.name.lastName
     }
   };
@@ -56,23 +55,45 @@ function tearDownDb() {
   return mongoose.connection.dropDatabase();
 }
 
-describe("BlogPost API resource", function() {
+describe('BlogPost API resource', function() {
 
-    before(function() {
-        return runServer(TEST_DATABASE_URL);
-    })
+  before(function() {
+    return runServer(TEST_DATABASE_URL);
+  });
 
-    beforeEach(function() {
-        return seedBlogPostData();
-    })
+  beforeEach(function() {
+    return seedBlogPostData();
+  });
 
-    afterEach(function() {
-        return teardownDb();
-    })
+  afterEach(function() {
+    return tearDownDb();
+  });
 
-    after(function() {
-        return closeServer();
-    })
+  after(function() {
+    return closeServer();
+  });
 
-})
 
+
+
+  describe('GET endpoint', function() {
+
+    it('should return all existing restaurants', function() {
+      let res;
+      return chai.request(app)
+        .get('/posts')
+        .then(function(_res) {
+          res = _res;
+          res.should.have.status(200);
+          res.body.should.be.a('array');
+          res.body.should.have.length.of.at.least(1);
+          return BlogPost.count();
+        })
+        .then(function(count) {
+          res.body.should.have.length.of(count);
+        });
+    });
+
+  });
+
+});
