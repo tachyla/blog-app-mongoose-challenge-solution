@@ -41,11 +41,11 @@ function seedBlogPostData() {
 //NEEDS to be an object
 function generateBlogPostData() {
   return {
-    title: faker.lorem.word,
-    content: faker.lorem.sentence,
+    title: faker.lorem.sentence(),
+    content: faker.lorem.text(),
     author: {
-      firstName: faker.name.firstName,
-      lastName: faker.name.lastName
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName()
     }
   };
 }
@@ -55,6 +55,7 @@ function tearDownDb() {
   return mongoose.connection.dropDatabase();
 }
 
+//PARENT DESCRIBE Function
 describe('BlogPost API resource', function() {
 
   before(function() {
@@ -94,6 +95,67 @@ describe('BlogPost API resource', function() {
         });
     });
 
+    it('should return posts with the right fields', function() {
+      let resBlogPost;
+      return chai.request(app)
+        .get('/posts')
+        .then(function(res) {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('array');
+          res.body.should.have.length.of.at.least(1);
+
+          res.body.forEach(function(post) {
+            post.should.be.a('object');
+            post.should.include.keys('id', 'title', 'content', 'author', 'created');
+          });
+          resPost = res.body[0];
+          return BlogPost.findById(resPost.id)
+          .exec();
+        })
+        .then(post => {
+          resPost.title.should.equal(post.title);
+          resPost.content.should.equal(post.content);
+          resPost.author.should.equal(post.authorName);
+        });
+    });
+
   });
+  describe('POST endpint', function() {
+
+    it('should add a new blog post', function() {
+      let newPost = {
+        title: faker.lorem.sentence(),
+        author: {
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName()},
+        content: faker.lorem.text()
+      };
+      return chai.request(app)
+        .post('/post')
+        .send(newPost)
+        .then(function(res) {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.should.be.a('object');
+          res.body.should.include.keys(
+            'id', 'title', 'content', 'author', 'created');
+          res.body.title.should.equal(newPost.title);
+          res.body.id.should.not.be.null;
+          res.body.author.should.equal(
+            `${newPost.author.firstName} ${newPost.author.lastName}`);
+          res.body.content.should.equal(newPost.content);
+          return BlogPost.findById(res.body.id).exec();
+        })
+        .then(function(post) {
+          post.title.should.equal(newPost.title);
+          post.content.should.equal(newPost.content);
+          post.author.firstName.should.equal(newPost.author.firstName);
+          post.author.lastName.should.equal(newPost.author.lastName);
+        });
+
+    })
+  })
 
 });
+  //CLOSE PARENT DESCRIBE func
