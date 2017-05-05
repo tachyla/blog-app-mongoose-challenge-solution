@@ -33,12 +33,7 @@ function seedBlogPostData() {
   //returns the promise of the seedData inserted into BlogPost
   return BlogPost.insertMany(seedData);
 }
-//This func describes how the seed data function will generate a whole BlogPost
-//NEED faker methods to :
-//generate seed title
-//genereate seed content
-//generate seed author
-//NEEDS to be an object
+
 function generateBlogPostData() {
   return {
     title: faker.lorem.sentence(),
