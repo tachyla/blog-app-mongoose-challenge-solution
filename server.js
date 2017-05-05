@@ -59,20 +59,6 @@ app.post('/posts', (req, res) => {
 
 });
 
-
-app.delete('/posts/:id', (req, res) => {
-  BlogPost
-    .findByIdAndRemove(req.params.id)
-    .then(() => {
-      res.status(204).json({message: 'success'});
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({error: 'something went terribly wrong'});
-    });
-});
-
-
 app.put('/posts/:id', (req, res) => {
   if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
     res.status(400).json({
@@ -94,6 +80,17 @@ app.put('/posts/:id', (req, res) => {
     .catch(err => res.status(500).json({message: 'Something went wrong'}));
 });
 
+app.delete('/posts/:id', (req, res) => {
+  BlogPost
+    .findByIdAndRemove(req.params.id)
+    .then(() => {
+      res.status(204).json({message: 'success'});
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({error: 'something went terribly wrong'});
+    });
+});
 
 app.delete('/:id', (req, res) => {
   BlogPosts.delete(req.params.id);
@@ -110,7 +107,7 @@ let server;
 
 function runServer(databaseUrl=TEST_DATABASE_URL, port=PORT) {
   return new Promise((resolve, reject) => {
-    mongoose.connect(databaseUrl, err => {
+    mongoose.connect('mongodb://tachyla:Qa12345678@ds129641.mlab.com:29641/blogtest', err => {
       if (err) {
         return reject(err);
       }
@@ -139,21 +136,6 @@ function closeServer() {
     });
   });
 }
-
-// function runServer(callback) {
-//   mongoose.connect(DATABASE_URL, (err) => {
-//     if (err && callback) {
-//       return callback(err);
-//     }
-
-//     app.listen(PORT, () => {
-//       console.log(`Your app is listening on port ${PORT}`);
-//       if (callback) {
-//         callback();
-//       }
-//     });
-//   });
-// };
 
 if (require.main === module) {
   runServer(function(err) {

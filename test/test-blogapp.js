@@ -10,9 +10,9 @@ mongoose.Promise = global.Promise;
 const should = chai.should();
 
 //REQUIRE model schema called {BlogPost} from models.js
-const {BlogPost} = require('../models');
-const {app, runServer, closeServer} = require('../server');
-const {TEST_DATABASE_URL} = require('../config');
+const { BlogPost } = require('../models');
+const { app, runServer, closeServer } = require('../server');
+const { TEST_DATABASE_URL } = require('../config');
 
 //initialize Chai
 chai.use(chaiHttp);
@@ -23,21 +23,21 @@ chai.use(chaiHttp);
 
 //Create function that add seed data to TEST_DATABSE
 function seedBlogPostData() {
-  console.info('seeding BlogPost data');
-    //starts empty, then fills with the returns from generate functions
+  console.info('Now seeding BlogPost data');
+  //starts empty, then fills with the returns from generate functions
   const seedData = [];
 
-  for (let i=1; i<10; i++) {
+  for (let i = 1; i < 10; i++) {
     seedData.push(generateBlogPostData());
   }
-    //returns the promise of the seedData inserted into BlogPost
+  //returns the promise of the seedData inserted into BlogPost
   return BlogPost.insertMany(seedData);
 }
 //This func describes how the seed data function will generate a whole BlogPost
 //NEED faker methods to :
-                //generate seed title
-                //genereate seed content
-                //generate seed author
+//generate seed title
+//genereate seed content
+//generate seed author
 //NEEDS to be an object
 function generateBlogPostData() {
   return {
@@ -56,62 +56,64 @@ function tearDownDb() {
 }
 
 //PARENT DESCRIBE Function
-describe('BlogPost API resource', function() {
+describe('BlogPost API resource', function () {
 
-  before(function() {
+  before(function () {
     return runServer(TEST_DATABASE_URL);
   });
 
-  beforeEach(function() {
+  beforeEach(function () {
     return seedBlogPostData();
   });
 
-  afterEach(function() {
+  afterEach(function () {
     return tearDownDb();
   });
 
-  after(function() {
+  after(function () {
     return closeServer();
   });
 
 
 
 
-  describe('GET endpoint', function() {
+  describe('GET endpoint', function () {
 
-    it('should return all existing restaurants', function() {
+    it('should return all existing blog posts', function () {
       let res;
       return chai.request(app)
         .get('/posts')
-        .then(function(_res) {
+        .then(function (_res) {
           res = _res;
           res.should.have.status(200);
           res.body.should.be.a('array');
           res.body.should.have.length.of.at.least(1);
           return BlogPost.count();
         })
-        .then(function(count) {
+        .then(function (count) {
           res.body.should.have.length.of(count);
         });
     });
 
-    it('should return posts with the right fields', function() {
-      let resBlogPost;
+    it('should return posts with the right fields', function () {
+      let resPost;
       return chai.request(app)
         .get('/posts')
-        .then(function(res) {
+        .then(function (res) {
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.be.a('array');
           res.body.should.have.length.of.at.least(1);
 
-          res.body.forEach(function(post) {
+          res.body.forEach(function (post) {
             post.should.be.a('object');
             post.should.include.keys('id', 'title', 'content', 'author', 'created');
+            //returns an array of objects
           });
           resPost = res.body[0];
+          //beacuase it return an array of objects 
           return BlogPost.findById(resPost.id)
-          .exec();
+            .exec();
         })
         .then(post => {
           resPost.title.should.equal(post.title);
@@ -121,25 +123,25 @@ describe('BlogPost API resource', function() {
     });
 
   });
-  describe('POST endpint', function() {
+  describe('POST endpoint', function () {
 
-    it('should add a new blog post', function() {
+    it('should add a new blog post', function () {
       let newPost = {
         title: faker.lorem.sentence(),
         author: {
           firstName: faker.name.firstName(),
-          lastName: faker.name.lastName()},
+          lastName: faker.name.lastName()
+        },
         content: faker.lorem.text()
       };
       return chai.request(app)
-        .post('/post')
+        .post('/posts')
         .send(newPost)
-        .then(function(res) {
+        .then(function (res) {
           res.should.have.status(201);
           res.should.be.json;
           res.body.should.be.a('object');
-          res.body.should.include.keys(
-            'id', 'title', 'content', 'author', 'created');
+          res.body.should.include.keys('id', 'title', 'content', 'author', 'created');
           res.body.title.should.equal(newPost.title);
           res.body.id.should.not.be.null;
           res.body.author.should.equal(
@@ -147,15 +149,48 @@ describe('BlogPost API resource', function() {
           res.body.content.should.equal(newPost.content);
           return BlogPost.findById(res.body.id).exec();
         })
-        .then(function(post) {
+        .then(function (post) {
           post.title.should.equal(newPost.title);
           post.content.should.equal(newPost.content);
           post.author.firstName.should.equal(newPost.author.firstName);
           post.author.lastName.should.equal(newPost.author.lastName);
         });
+    });
+  });
 
-    })
-  })
+  describe('PUT endpoint', function () {
+    it('should update each field ', function () {
+      const updateData = {
+            title: 'fooTitle',
+            content: 'foo Bar FooBar',
+            author: 'fooBar author'
+          };
+          //func below instructs the test what to do
+      return BlogPost
+            .findOne()
+            .exec()
+            .then(post => {
+              updateData.id = post.id;
+
+              //SET UP REQUEST
+              return chai.request(app)
+                .put(`/posts/${post.id}`)
+                .send(updateData);
+            });
+    });
+
+  });
+
+
+
+
+
+
+
+
+
+
 
 });
+
   //CLOSE PARENT DESCRIBE func
