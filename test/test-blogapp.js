@@ -88,7 +88,9 @@ describe('BlogPost API resource', function () {
           res.should.have.status(200);
           res.body.should.be.a('array');
           res.body.should.have.length.of.at.least(1);
-          return BlogPost.count();
+          
+          return BlogPost
+          .count();
         })
         .then(function (count) {
           res.body.should.have.length.of(count);
@@ -111,8 +113,8 @@ describe('BlogPost API resource', function () {
             //returns an array of objects
           });
           resPost = res.body[0];
-          //beacuase it return an array of objects 
-          return BlogPost.findById(resPost.id)
+          return BlogPost
+            .findById(resPost.id)
             .exec();
         })
         .then(post => {
@@ -147,7 +149,9 @@ describe('BlogPost API resource', function () {
           res.body.author.should.equal(
             `${newPost.author.firstName} ${newPost.author.lastName}`);
           res.body.content.should.equal(newPost.content);
-          return BlogPost.findById(res.body.id).exec();
+          return BlogPost
+            .findById(res.body.id)
+            .exec();
         })
         .then(function (post) {
           post.title.should.equal(newPost.title);
@@ -160,11 +164,15 @@ describe('BlogPost API resource', function () {
 
   describe('PUT endpoint', function () {
     it('should update each field ', function () {
+      //format of updateData should be the same format that the schema requires
       const updateData = {
-            title: 'fooTitle',
-            content: 'foo Bar FooBar',
-            author: 'fooBar author'
-          };
+        title: 'fooTitle',
+        content: 'foo Bar FooBar',
+        author: {
+          firstName: 'Samuel',
+          lastName: 'Jackson'
+        }
+      };
           //func below instructs the test what to do
       return BlogPost
             .findOne()
@@ -176,21 +184,52 @@ describe('BlogPost API resource', function () {
               return chai.request(app)
                 .put(`/posts/${post.id}`)
                 .send(updateData);
+            })
+            .then(res => {
+              res.should.have.status(201);
+              res.should.be.json;
+              res.body.should.be.a('object');
+              res.body.title.should.be.equal(updateData.title);
+              res.body.author.should.be.equal(
+                `${updateData.author.firstName} ${updateData.author.lastName}`);
+              res.body.content.should.equal(updateData.content);
+
+              return BlogPost
+                .findById(res.body.id)
+                .exec();
+            })
+            .then(post => {
+              post.title.should.equal(updateData.title);
+              post.content.should.equal(updateData.content);
+              post.author.firstName.should.equal(updateData.author.firstName);
+              post.author.lastName.should.equal(updateData.author.lastName);
             });
     });
-
   });
 
+  describe('DELETE endpoint', function () {
+    it('should delete a post by id', function () {
+      let post; 
+      
+      return BlogPost
+        .findOne()
+        .exec()
+        .then(_post => {
+          post = _post;
+          //originalData = seedData_post;
+          return chai.request(app).delete(`/posts/${post.id}`);
+        })
+        .then(res => {
+          res.should.have.status(204);
+          return BlogPost.findById(post.id);
+        })
+        //the promise returns the response   
+        .then(_post => {
+          should.not.exist(_post);
+        });
 
-
-
-
-
-
-
-
-
+    });
+  });
 
 });
 
-  //CLOSE PARENT DESCRIBE func
