@@ -6,7 +6,7 @@ const faker = require('faker');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-//this so should syntax can be used throughout
+//so should syntax can be used throughout
 const should = chai.should();
 
 //REQUIRE model schema called {BlogPost} from models.js
